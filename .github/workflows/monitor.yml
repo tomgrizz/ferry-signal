@@ -1,0 +1,47 @@
+name: Ferry monitor
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub may delay scheduled runs by a few minutes
+    # under load; this is normal.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: "Send a test notification to your phone instead of checking the ferry"
+        type: boolean
+        default: false
+
+# Never let two runs race each other on the state-file commit.
+concurrency:
+  group: ferry-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check ferry status
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TEST_NOTIFY: ${{ inputs.test_notification && '1' || '' }}
+        run: python3 monitor.py
+
+      - name: Persist state
+        if: ${{ !inputs.test_notification }}
+        run: |
+          if git status --porcelain state/ | grep -q .; then
+            git config user.name "ferry-signal bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add state/
+            git commit -m "Update ferry status state"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          else
+            echo "No state change."
+          fi
