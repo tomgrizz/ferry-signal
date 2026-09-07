@@ -1,8 +1,8 @@
 {
   "798": {
-    "details": "Service reduced to single ferry (30 minute schedule)",
+    "details": "The ferry is running off schedule due to high traffic volume",
     "name": "Glenora Ferry Service (Adolphustown - Glenora)",
     "return_time": null,
-    "status": "In Service"
+    "status": "In Service Off Schedule"
   }
 }
