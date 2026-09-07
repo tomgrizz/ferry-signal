@@ -1,8 +1,8 @@
 {
   "798": {
-    "details": "The ferry is running off schedule due to high traffic volume",
+    "details": "The ferry is in regular service",
     "name": "Glenora Ferry Service (Adolphustown - Glenora)",
     "return_time": null,
-    "status": "In Service Off Schedule"
+    "status": "In Service"
   }
 }
