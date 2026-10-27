@@ -10,6 +10,7 @@ Designed to run from a GitHub Actions cron job. State between runs is kept
 in state/status.json, which the workflow commits back to the repo.
 
 Environment variables:
+  ONTARIO_511_KEY  (required) Ontario 511 developer API key.
   NTFY_TOPIC   (required to notify) ntfy.sh topic to publish to.
   NTFY_SERVER  ntfy server base URL, default https://ntfy.sh
   FERRY_MATCH  substring to match against terminal names, default "glenora"
@@ -24,11 +25,13 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
-API_URL = "https://511on.ca/api/v2/get/ferryterminals?format=json"
+API_URL = "https://511on.ca/api/v2/get/ferryterminals"
 USER_AGENT = "ferry-signal/1.0 (personal Glenora ferry status monitor)"
 
+API_KEY = os.environ.get("ONTARIO_511_KEY", "").strip()
 NTFY_SERVER = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 FERRY_MATCH = os.environ.get("FERRY_MATCH", "glenora").lower()
@@ -39,10 +42,16 @@ IN_SERVICE = "in service"
 
 def fetch_terminals(retries: int = 3, backoff: float = 5.0) -> list:
     """Fetch all ferry terminals from Ontario 511, with retries."""
+    if not API_KEY:
+        raise SystemExit(
+            "ONTARIO_511_KEY not set. Ontario 511 rejects requests without a "
+            "developer key; get one at https://511on.ca/developers/help"
+        )
+    url = f"{API_URL}?{urllib.parse.urlencode({'key': API_KEY, 'format': 'json'})}"
     last_err = None
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(API_URL, headers={"User-Agent": USER_AGENT})
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.load(resp)
             if not isinstance(data, list):
@@ -123,6 +132,11 @@ def save_state(entries: dict) -> None:
 
 
 def main() -> None:
+    if not NTFY_TOPIC and os.environ.get("GITHUB_ACTIONS") == "true":
+        # Without a topic every notification is silently dropped, so a green
+        # run would be meaningless. Fail instead, so GitHub emails about it.
+        raise SystemExit("NTFY_TOPIC secret not set; notifications cannot be delivered.")
+
     if os.environ.get("TEST_NOTIFY") == "1":
         notify(
             "Ferry monitor test",

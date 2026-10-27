@@ -28,6 +28,7 @@ jobs:
 
       - name: Check ferry status
         env:
+          ONTARIO_511_KEY: ${{ secrets.ONTARIO_511_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TEST_NOTIFY: ${{ inputs.test_notification && '1' || '' }}
         run: python3 monitor.py

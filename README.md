@@ -23,7 +23,7 @@ ntfy.sh  ──  push notification to the ntfy app on your phone
 
 Everything in this stack is free:
 
-- **Ontario 511 API** — free public API, no key required.
+- **Ontario 511 API** — free public API; requires a free developer key.
 - **GitHub Actions** — free unlimited minutes on public repos. (On a
   *private* repo the free tier is 2,000 min/month and each run bills a
   1-minute minimum, so drop the cron to `*/30` to stay comfortably free.)
@@ -48,11 +48,16 @@ gives you the same information, usually structured better and just as fast.
    `glenora-ferry-x7k2mq9v`. In the app: *Subscribe to topic* → enter your
    topic name (server: default `ntfy.sh`).
 
-3. **Add the topic as a repo secret.** In this GitHub repo:
-   *Settings → Secrets and variables → Actions → New repository secret*,
-   name `NTFY_TOPIC`, value your topic name.
+3. **Get an Ontario 511 developer key.** Sign up for an account at
+   [511on.ca](https://511on.ca), then request a key on the
+   [developer page](https://511on.ca/developers/help).
 
-4. **Test it.** *Actions → Ferry monitor → Run workflow*, tick
+4. **Add both as repo secrets.** In this GitHub repo:
+   *Settings → Secrets and variables → Actions → New repository secret*:
+   - `NTFY_TOPIC` — your topic name.
+   - `ONTARIO_511_KEY` — your developer key.
+
+5. **Test it.** *Actions → Ferry monitor → Run workflow*, tick
    "Send a test notification", and run. A test message should hit your
    phone within seconds.
 
